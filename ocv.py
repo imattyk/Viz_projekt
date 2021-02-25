@@ -4,51 +4,49 @@ import numpy as np
 def nothing(x):
     pass
 
+
 # Enable camera
 cap = cv2.VideoCapture(0)
 
-cv2.namedWindow("TB")
-cv2.createTrackbar("L-H", "TB", 0 , 180, nothing)
-cv2.createTrackbar("L-S", "TB", 68 , 255, nothing)
-cv2.createTrackbar("L-V", "TB", 154 , 255, nothing)
-cv2.createTrackbar("U-H", "TB", 180 , 180, nothing)
-cv2.createTrackbar("U-S", "TB", 255 , 255, nothing)
-cv2.createTrackbar("U-V", "TB", 255 , 255, nothing)
-
 while True:
-    _, frame = cap.read()
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV) # frame je RGB tak ho prevediem na HSV
+    _, img = cap.read()
+    imgGry = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    l_h = cv2.getTrackbarPos("L-H","TB")
-    l_s = cv2.getTrackbarPos("L-S","TB")
-    l_v = cv2.getTrackbarPos("L-V","TB")
+    ret, thrash = cv2.threshold(imgGry, 240 , 255, cv2.CHAIN_APPROX_NONE)
+    contours , hierarchy = cv2.findContours(thrash, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
-    u_h = cv2.getTrackbarPos("U-H","TB")
-    u_s = cv2.getTrackbarPos("U-S","TB")
-    u_v = cv2.getTrackbarPos("U-V","TB")
+    white = np.ones((img.shape[0], img.shape[1], 3))
 
-    low_red = np.array([l_h,l_s,l_v])
-    upper_red = np.array([u_h,u_s,u_v])
-    mask = cv2.inRange(hsv,low_red,upper_red)
+    for c in contours:
+        approx = cv2.approxPolyDP(c, 0.01*cv2.arcLength(c, True), True)
+        cv2.drawContours(img, [approx], 0, (0, 255, 0), 5)
+        x = approx.ravel()[0]
+        y = approx.ravel()[1] - 5
+        if len(approx) == 3:
+            cv2.putText(img, "Triangle", (x, y),
+                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 1)
+        elif len(approx) == 4:
+            x1, y1, w, h = cv2.boundingRect(approx)
+            aspect_ratio = float(w) / float(h)
+            print(aspect_ratio)
+            if aspect_ratio >= 0.95 and aspect_ratio <= 1.05:
+                cv2.putText(img, "Square", (x, y),
+                           cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 1)
+            else:
+                cv2.putText(img, "Rectangle", (x, y),
+                           cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 1)
+        elif len(approx) == 5:
+            cv2.putText(img, "Pentagon", (x, y),
+                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 1)
+        elif len(approx) == 10:
+            cv2.putText(img, "Star", (x, y),
+                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 1)
+        else:
+            cv2.putText(img, "Circle", (x, y),
+                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 1)
 
-
-    # contours
-
-    contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    # prefiltrovat obraz
-    kernel = np.ones((5,5),np.uint8) 
-    mask = cv2.erode(mask,kernel)
-
-    for cnt in contours:
-        area = cv2.contourArea(cnt)
-        approx = cv2.approxPolyDP(cnt,0.01*cv2.arcLength(cnt,True),True)
-        if area > 400:
-            cv2.drawContours(frame,[approx], 0,(0,0,0),5)
-
-
-    cv2.imshow("Frame",frame)
-    cv2.imshow("Mask",mask)
-
+    cv2.imshow("imgGry",thrash)
+    cv2.imshow("img",img)
     key = cv2.waitKey(1)
     if key == 27:
         break
