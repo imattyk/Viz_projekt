@@ -4,50 +4,59 @@ import numpy as np
 def nothing(x):
     pass
 
-# Enable camera
-cap = cv2.VideoCapture(0)
+def getContour(img,img_cont):
+     contours,_ = cv2.findContours(img,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+   
 
-cv2.namedWindow("TB")
-cv2.createTrackbar("L-H", "TB", 0 , 180, nothing)
-cv2.createTrackbar("L-S", "TB", 68 , 255, nothing)
-cv2.createTrackbar("L-V", "TB", 154 , 255, nothing)
-cv2.createTrackbar("U-H", "TB", 180 , 180, nothing)
-cv2.createTrackbar("U-S", "TB", 255 , 255, nothing)
-cv2.createTrackbar("U-V", "TB", 255 , 255, nothing)
+     for cnt in contours:
+        area = cv2.contourArea(cnt)
+        area_trackbar = cv2.getTrackbarPos("Area","Parameters")
+        if area > area_trackbar:
+            cv2.drawContours(img_cont,cnt,-1,(255,0,255),7)
+            arc = cv2.arcLength(cnt,True)
+            approx = cv2.approxPolyDP(cnt,0.02*arc,True)
+            print(len(approx))
+            x,y,w,h = cv2.boundingRect(approx)
+            cv2.putText(img_cont,"Points: "+ str(len(approx)),(x+w+20,y+20),cv2.FONT_HERSHEY_COMPLEX,.7,(0,255,0),2)
+
+        
+
+# Enable camera
+url = 'http://192.168.1.12:8080/video'
+cap = cv2.VideoCapture(url)
+
+cv2.namedWindow("Parameters")
+cv2.resizeWindow("Parameters",640,240)
+cv2.createTrackbar("Threshhold1","Parameters",22,255,nothing)
+cv2.createTrackbar("Threshhold2","Parameters",210,225,nothing)
+cv2.createTrackbar("Area","Parameters",0,30000,nothing)
 
 while True:
-    _, frame = cap.read()
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV) # frame je RGB tak ho prevediem na HSV
-
-    l_h = cv2.getTrackbarPos("L-H","TB")
-    l_s = cv2.getTrackbarPos("L-S","TB")
-    l_v = cv2.getTrackbarPos("L-V","TB")
-
-    u_h = cv2.getTrackbarPos("U-H","TB")
-    u_s = cv2.getTrackbarPos("U-S","TB")
-    u_v = cv2.getTrackbarPos("U-V","TB")
-
-    low_red = np.array([l_h,l_s,l_v])
-    upper_red = np.array([u_h,u_s,u_v])
-    mask = cv2.inRange(hsv,low_red,upper_red)
+    ret, frame = cap.read()
+    resize = cv2.resize(frame,(640,480))
+    
+    if frame is None:
+        print("cam je odpojena")
+        break
+    img_cont = resize.copy()
+    
+    img_gs_blur = cv2.GaussianBlur(resize,(7,7),1)
+    img_gray = cv2.cvtColor(img_gs_blur,cv2.COLOR_BGR2GRAY)
 
 
-    # contours
+    threshhold1 = cv2.getTrackbarPos("Threshhold1","Parameters")
+    threshhold2 = cv2.getTrackbarPos("Threshhold2","Parameters")
+    img_canny = cv2.Canny(img_gray,threshhold1,threshhold2)
 
-    contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    # prefiltrovat obraz
-    kernel = np.ones((5,5),np.uint8) 
-    mask = cv2.erode(mask,kernel)
+    # zvyraznenie hran v canny filt
+    kernel = np.ones((5,5))
+    img_dilatation = cv2.dilate(img_canny,kernel,iterations=1)
 
-    for cnt in contours:
-        area = cv2.contourArea(cnt)
-        approx = cv2.approxPolyDP(cnt,0.01*cv2.arcLength(cnt,True),True)
-        if area > 400:
-            cv2.drawContours(frame,[approx], 0,(0,0,0),5)
+    # kontury
+    getContour(img_dilatation,img_cont)
+    cv2.imshow("blur",img_dilatation)
+    cv2.imshow("canny",img_cont)
 
-
-    cv2.imshow("Frame",frame)
-    cv2.imshow("Mask",mask)
 
     key = cv2.waitKey(1)
     if key == 27:
