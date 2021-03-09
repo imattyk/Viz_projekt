@@ -5,25 +5,47 @@ def nothing(x):
     pass
 
 def getContour(img,img_cont):
-     contours,_ = cv2.findContours(img,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+    contours,_ = cv2.findContours(img,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
    
 
-     for cnt in contours:
+    for cnt in contours:
         area = cv2.contourArea(cnt)
         area_trackbar = cv2.getTrackbarPos("Area","Parameters")
         if area > area_trackbar:
             cv2.drawContours(img_cont,cnt,-1,(255,0,255),7)
             arc = cv2.arcLength(cnt,True)
             approx = cv2.approxPolyDP(cnt,0.02*arc,True)
+            x = approx.ravel()[0]
+            y = approx.ravel()[1] - 5
             print(len(approx))
-            x,y,w,h = cv2.boundingRect(approx)
-            cv2.putText(img_cont,"Points: "+ str(len(approx)),(x+w+20,y+20),cv2.FONT_HERSHEY_COMPLEX,.7,(0,255,0),2)
-
+            if len(approx) == 4:
+                x1,y1,w,h = cv2.boundingRect(approx)
+                aspect_ratio = float(w) / float(h)
+                #print(aspect_ratio)
+                if aspect_ratio >= 0.90 and aspect_ratio <= 1.10:
+                    cv2.putText(img_cont, "Square", (x, y),
+                    cv2.FONT_HERSHEY_COMPLEX,.7,(0,255,0),2)
+                else:
+                    cv2.putText(img_cont, "Rectangle", (x, y),
+                    cv2.FONT_HERSHEY_COMPLEX,.7,(0,255,0),2)
+            elif len(approx) == 3:
+                cv2.putText(img_cont, "Triangle", (x, y),
+                cv2.FONT_HERSHEY_COMPLEX,.7,(0,255,0),2)
+            elif len(approx) == 5:
+                cv2.putText(img_cont, "Pentagon", (x, y),
+                cv2.FONT_HERSHEY_COMPLEX,.7,(0,255,0),2)
+            elif len(approx) == 10:
+                cv2.putText(img_cont, "Star", (x, y),
+                cv2.FONT_HERSHEY_COMPLEX,.7,(0,255,0),2)
+            else:
+                cv2.putText(img_cont, "Circle", (x, y),
+                cv2.FONT_HERSHEY_COMPLEX,.7,(0,255,0),2)
         
 
 # Enable camera
-url = 'http://192.168.1.12:8080/video'
-cap = cv2.VideoCapture(url)
+url_mates = 'http://192.168.0.147:8081'
+url_marek = 'http://192.168.1.12:8080/video'
+cap = cv2.VideoCapture(url_mates)
 
 cv2.namedWindow("Parameters")
 cv2.resizeWindow("Parameters",640,240)
@@ -33,7 +55,9 @@ cv2.createTrackbar("Area","Parameters",0,30000,nothing)
 
 while True:
     ret, frame = cap.read()
-    resize = cv2.resize(frame,(640,480))
+    temp = cv2.resize(frame,(640,480))
+
+    resize = temp[150:150+330, 0:0+640]
     
     if frame is None:
         print("cam je odpojena")
@@ -54,8 +78,8 @@ while True:
 
     # kontury
     getContour(img_dilatation,img_cont)
-    cv2.imshow("blur",img_dilatation)
-    cv2.imshow("canny",img_cont)
+    cv2.imshow("Mask",img_dilatation)
+    cv2.imshow("Original",img_cont)
 
 
     key = cv2.waitKey(1)
