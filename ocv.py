@@ -60,7 +60,7 @@ def get_greyscale_mask(image):
 
 def get_hsv_mask(image):
 
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV) # frame je RGB tak ho prevediem na HSV
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) # frame je RGB tak ho prevediem na HSV
 
     l_h = cv2.getTrackbarPos("L-H","TB")
     l_s = cv2.getTrackbarPos("L-S","TB")
