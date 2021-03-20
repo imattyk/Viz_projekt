@@ -70,16 +70,49 @@ def get_hsv_mask(image):
     u_s = cv2.getTrackbarPos("U-S","TB")
     u_v = cv2.getTrackbarPos("U-V","TB")
 
-    low_red = np.array([l_h,l_s,l_v])
-    upper_red = np.array([u_h,u_s,u_v])
-    mask = cv2.inRange(hsv,low_red,upper_red)
+    test1 = np.array([l_h,l_s,l_v])
+    test2 = np.array([u_h,u_s,u_v])
+
+    low_red = np.array([164,142,171])
+    upper_red = np.array([180,255,255])
+
+    low_green = np.array([50,93,65])
+    upper_green = np.array([72,255,255])
+
+    low_blue = np.array([107,84,104])
+    upper_blue = np.array([153,179,219])
+
+    low_yellow = np.array([4,120,128])
+    upper_yellow = np.array([43,255,255])
+
+    low_hsv = 0
+    upper_hsv = 0
+
+    if blue_hsv == 1:
+        low_hsv = low_blue
+        upper_hsv = upper_blue
+    elif red_hsv == 1:
+        low_hsv = low_red
+        upper_hsv = upper_red
+    elif green_hsv == 1:
+        low_hsv = low_green
+        upper_hsv = upper_green
+    elif yellow_hsv == 1:
+        low_hsv = low_yellow
+        upper_hsv = upper_yellow
+    elif test_hsv == 1:
+        low_hsv = test1
+        upper_hsv = test2
+    
+
+    mask = cv2.inRange(hsv,low_hsv,upper_hsv)
 
     return mask
 
 # Enable camera
 url_mates = 'http://192.168.0.149:8081'
-url_marek = 'http://192.168.1.11:8080/video'
-cap = cv2.VideoCapture(url_mates)
+url_marek = 'http://192.168.1.10:8080/video'
+cap = cv2.VideoCapture(url_marek)
 
 cv2.namedWindow("Parameters")
 cv2.resizeWindow("Parameters",640,240)
@@ -95,7 +128,12 @@ cv2.createTrackbar("U-H", "TB", 180 , 180, nothing)
 cv2.createTrackbar("U-S", "TB", 255 , 255, nothing)
 cv2.createTrackbar("U-V", "TB", 255 , 255, nothing)
 
-prd = 0
+switch = 0
+blue_hsv = 0
+red_hsv = 0
+yellow_hsv = 0
+green_hsv = 0
+test_hsv = 0
 
 while True:
     ret, frame = cap.read()
@@ -109,9 +147,9 @@ while True:
     img_cont = resize.copy()
     
 
-    if prd == 0: 
+    if switch == 0: 
         img_dil = get_greyscale_mask(resize)
-    if prd == 1:
+    if switch == 1:
         img_dil = get_hsv_mask(resize)
 
 
@@ -123,13 +161,44 @@ while True:
 
 
     key = cv2.waitKey(1)
-    if key == 27:
+    if key == 27: # esc
         break
-    if key == 32:
-        if prd == 1:
-            prd = 0
+    if key == 32: # space
+        if switch == 1:
+            switch = 0
         else:
-            prd = 1
+            switch = 1
+    if key == 98: # b
+        blue_hsv = 1
+        yellow_hsv = 0
+        green_hsv = 0
+        red_hsv = 0
+        test_hsv = 0
+    if key == 114: # r
+        blue_hsv = 0
+        yellow_hsv = 0
+        green_hsv = 0
+        red_hsv = 1
+        test_hsv = 0
+    if key == 103: # g
+        blue_hsv = 0
+        yellow_hsv = 0
+        green_hsv = 1
+        red_hsv = 0
+        test_hsv = 0
+    if key == 121: # y
+        blue_hsv = 0
+        yellow_hsv = 1
+        green_hsv = 0
+        red_hsv = 0
+        test_hsv = 0
+    if key == 116:
+        blue_hsv = 0
+        yellow_hsv = 0
+        green_hsv = 0
+        red_hsv = 0
+        test_hsv = 1
+
 
 
 cap.release()
