@@ -58,7 +58,6 @@ def show_hough_line(img, accumulator, thetas, rhos, save_path=None):
     plt.show()
 
 def peak_votes(accumulator, thetas, rhos):
-    """ Finds the max number of votes in the hough accumulator """
     idx = np.argmax(accumulator)
     #accumulator[idx] = 0
     rho_theta = np.unravel_index(idx, accumulator.shape)
