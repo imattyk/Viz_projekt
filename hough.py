@@ -8,26 +8,26 @@ def rgb2gray(rgb):
 
 def hough_line(img, angle_step=1, lines_are_white=True, value_threshold=5):
 
-    # Rho and Theta ranges
+    # Rhocka a Thety
     thetas = np.deg2rad(np.arange(-90.0, 90.0, angle_step))
     width, height = img.shape
     diag_len = int(round(math.sqrt(width * width + height * height)))
     rhos = np.linspace(-diag_len, diag_len, diag_len * 2)
 
-    # Hough accumulator array of theta vs rho
+    # Vytvorenie matice co drzi hough space
     num_thetas = len(thetas)
     accumulator = np.zeros((2 * diag_len, num_thetas), dtype=np.uint8)
-    # (row, col) indexes to edges
+    # indexy ku krajom
     are_edges = img > value_threshold if lines_are_white else img < value_threshold
     y_idxs, x_idxs = np.nonzero(are_edges)
 
-    # Vote in the hough accumulator
+    # pocet priesecnikov pre kazdy edge pixel
     for i in range(len(x_idxs)):
         x = x_idxs[i]
         y = y_idxs[i]
 
         for t_idx in range(num_thetas):
-            # Calculate rho. diag_len is added for a positive index
+            # diag len pridame aby sme boli len v kladnych indexoch
             rho = diag_len + int(round(x * np.cos(thetas[t_idx]) + y * np.sin(thetas[t_idx])))
             accumulator[rho, t_idx] += 1
 
