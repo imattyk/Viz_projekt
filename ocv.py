@@ -110,9 +110,9 @@ def get_hsv_mask(image):
     return mask
 
 # Enable camera
-url_mates = 'http://192.168.0.149:8081'
+url_mates = 'http://192.168.0.150:8081'
 url_marek = 'http://192.168.1.10:8080/video'
-cap = cv2.VideoCapture(url_marek)
+cap = cv2.VideoCapture(url_mates)
 
 cv2.namedWindow("Parameters")
 cv2.resizeWindow("Parameters",640,240)
